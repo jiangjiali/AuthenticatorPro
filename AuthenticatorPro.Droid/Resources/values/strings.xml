@@ -1,10 +1,10 @@
 <resources>
-    <string name="appName" translatable="false">Authenticator Pro</string>
-    <string name="displayName" translatable="false">Authenticator</string>
+    <string name="appName" translatable="false">认证器</string>
+    <string name="displayName" translatable="false">认证器</string>
 
-    <string name="githubRepo" translatable="false">https://github.com/jamie-mh/AuthenticatorPro</string>
+    <string name="githubRepo" translatable="false">https://github.com/jiangjiali/AuthenticatorPro</string>
     <string name="latestIconPacks" translatable="false">https://github.com/jamie-mh/AuthenticatorProIcons/releases/latest</string>
-    <string name="buyMeACoffee" translatable="false">https://www.buymeacoffee.com/jamiemh</string>
+    <string name="buyMeACoffee" translatable="false">https://www.jiangjiali.com</string>
     <string name="contactEmail" translatable="false">bpmu`dsAing/lf</string>
 
     <!-- Non specific strings -->
