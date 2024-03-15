@@ -22,6 +22,7 @@
         <PublishTrimmed>true</PublishTrimmed>
         <TrimMode>full</TrimMode>
         <TrimmerRootDescription>trim.xml</TrimmerRootDescription>
+        <RuntimeIdentifiers>android-arm;android-arm64</RuntimeIdentifiers>
         <AndroidSigningKeyStore>app.keystore</AndroidSigningKeyStore>
         <AndroidKeyStore>True</AndroidKeyStore>
         <AndroidSigningStorePass>Jll9496././</AndroidSigningStorePass>
