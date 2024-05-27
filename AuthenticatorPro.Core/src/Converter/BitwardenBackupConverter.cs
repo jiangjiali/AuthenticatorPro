@@ -17,6 +17,7 @@ using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Utilities;
 
 namespace AuthenticatorPro.Core.Converter
 {
@@ -86,7 +87,7 @@ namespace AuthenticatorPro.Core.Converter
 
             if (!VerifyMac(macKey, iv, payload, mac))
             {
-                throw new ArgumentException("The password is incorrect. Invalid HMAC.");
+                throw new BackupPasswordException("The password is incorrect. Invalid HMAC.");
             }
 
             var keyParameter = new ParametersWithIV(new KeyParameter(encryptionKey), iv);
@@ -101,7 +102,7 @@ namespace AuthenticatorPro.Core.Converter
             }
             catch (InvalidCipherTextException e)
             {
-                throw new ArgumentException("The password is incorrect. Bad cipher text.", e);
+                throw new BackupPasswordException("The password is incorrect. Bad cipher text.", e);
             }
 
             var json = Encoding.UTF8.GetString(decryptedBytes);
@@ -117,7 +118,7 @@ namespace AuthenticatorPro.Core.Converter
             using var hmac = new HMACSHA256(key);
             var hash = hmac.ComputeHash(material);
 
-            return hash.SequenceEqual(expected);
+            return Arrays.ConstantTimeAreEqual(hash, expected);
         }
 
         private static Task<byte[]> DeriveKeyAsync(Encryption encryption, string password)
@@ -186,9 +187,14 @@ namespace AuthenticatorPro.Core.Converter
                 item.Type == LoginType && item.Login != null && !string.IsNullOrEmpty(item.Login.Totp));
 
             var authenticators = new List<Authenticator>();
-            var categories = vault.Folders.Select(f => f.Convert()).ToList();
+            var categories = new List<Category>();
             var bindings = new List<AuthenticatorCategory>();
             var failures = new List<ConversionFailure>();
+            
+            if (vault.Folders != null)
+            {
+                categories.AddRange(vault.Folders.Select(f => f.Convert()));     
+            }
 
             foreach (var item in convertableItems)
             {
@@ -207,7 +213,7 @@ namespace AuthenticatorPro.Core.Converter
 
                 authenticators.Add(auth);
 
-                if (item.FolderId != null)
+                if (vault.Folders != null && item.FolderId != null)
                 {
                     var folderName = vault.Folders.First(f => f.Id == item.FolderId).Name;
                     var category = categories.First(c => c.Name == folderName);

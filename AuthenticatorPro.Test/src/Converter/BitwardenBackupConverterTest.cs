@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using AuthenticatorPro.Core;
+using AuthenticatorPro.Core.Backup;
 using AuthenticatorPro.Core.Converter;
 using AuthenticatorPro.Test.Converter.Fixture;
 using Moq;
@@ -89,11 +90,24 @@ namespace AuthenticatorPro.Test.Converter
         [Fact]
         public async Task ConvertAsync_encrypted_wrongPassword()
         {
-            await Assert.ThrowsAsync<ArgumentException>(() =>
+            await Assert.ThrowsAsync<BackupPasswordException>(() =>
                 _bitwardenBackupConverter.ConvertAsync(_bitwardenBackupFixture.EncryptedPbkdf2Data, "wrong password"));
-            await Assert.ThrowsAsync<ArgumentException>(() =>
+            await Assert.ThrowsAsync<BackupPasswordException>(() =>
                 _bitwardenBackupConverter.ConvertAsync(_bitwardenBackupFixture.EncryptedArgon2IdData,
                     "wrong password"));
+        }
+        
+        [Fact]
+        public async Task ConvertAsync_authenticator()
+        {
+            var result = await _bitwardenBackupConverter.ConvertAsync(_bitwardenBackupFixture.AuthenticatorData);
+
+            Assert.Empty(result.Failures);
+
+            Assert.Equal(6, result.Backup.Authenticators.Count());
+            Assert.Empty(result.Backup.Categories);
+            Assert.Empty(result.Backup.AuthenticatorCategories);
+            Assert.Null(result.Backup.CustomIcons);
         }
     }
 }

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -99,25 +100,17 @@ namespace AuthenticatorPro.Core.Converter
             return new ConversionResult { Failures = failures, Backup = backup };
         }
 
-        private static KeyParameter DeriveKey(string password, byte[] salt, int iterations)
+        private static KeyParameter DeriveKey(string password, byte[] salt, uint iterations)
         {
             var passwordBytes = Encoding.UTF8.GetBytes(password);
             var generator = new Pkcs5S2ParametersGenerator(new Sha1Digest());
-            generator.Init(passwordBytes, salt, iterations);
+            generator.Init(passwordBytes, salt, (int) iterations);
             return (KeyParameter) generator.GenerateDerivedParameters(BaseAlgorithm, KeyLength * 8);
         }
 
         private static string Decrypt(byte[] data, string password)
         {
-            var iterationsBytes = data.Take(IterationsLength);
-
-            if (BitConverter.IsLittleEndian)
-            {
-                iterationsBytes = iterationsBytes.Reverse();
-            }
-
-            var iterations = (int) BitConverter.ToUInt32(iterationsBytes.ToArray());
-
+            var iterations = BinaryPrimitives.ReadUInt32BigEndian(data.Take(IterationsLength).ToArray());
             var salt = data.Skip(IterationsLength).Take(SaltLength).ToArray();
             var iv = data.Skip(IterationsLength + SaltLength).Take(IvLength).ToArray();
             var payload = data.Skip(IterationsLength + SaltLength + IvLength).ToArray();
@@ -136,7 +129,7 @@ namespace AuthenticatorPro.Core.Converter
             }
             catch (InvalidCipherTextException e)
             {
-                throw new ArgumentException("The password is incorrect", e);
+                throw new BackupPasswordException("The password is incorrect", e);
             }
 
             return Encoding.UTF8.GetString(decrypted);

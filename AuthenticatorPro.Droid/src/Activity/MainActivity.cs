@@ -83,11 +83,12 @@ namespace AuthenticatorPro.Droid.Activity
         private const int RequestImportFreeOtpPlus = 11;
         private const int RequestImportAegis = 12;
         private const int RequestImportBitwarden = 13;
-        private const int RequestImportTwoFas = 14;
-        private const int RequestImportLastPass = 15;
-        private const int RequestImportWinAuth = 16;
-        private const int RequestImportTotpAuthenticator = 17;
-        private const int RequestImportUriList = 18;
+        private const int RequestImportEnteAuth = 14;
+        private const int RequestImportTwoFas = 15;
+        private const int RequestImportLastPass = 16;
+        private const int RequestImportWinAuth = 17;
+        private const int RequestImportTotpAuthenticator = 18;
+        private const int RequestImportUriList = 19;
 
         // Data
         private readonly ILogger _log = Log.ForContext<MainActivity>();
@@ -246,17 +247,7 @@ namespace AuthenticatorPro.Droid.Activity
                 // Locked but no password, unlock now
                 case false:
                 {
-                    try
-                    {
-                        await _database.OpenAsync(null, Database.Origin.Activity);
-                    }
-                    catch (Exception e)
-                    {
-                        _log.Error(e, "Error opening unprotected database");
-                        ShowDatabaseErrorDialog(e);
-                        return;
-                    }
-
+                    await _database.OpenAsync(null, Database.Origin.Activity);
                     await OnDatabaseOpened();
                     break;
                 }
@@ -357,6 +348,10 @@ namespace AuthenticatorPro.Droid.Activity
 
                 case RequestImportBitwarden:
                     await ImportFromUri(new BitwardenBackupConverter(_iconResolver), intent.Data);
+                    break;
+                
+                case RequestImportEnteAuth:
+                    await ImportFromUri(new EnteAuthBackupConverter(_iconResolver), intent.Data);
                     break;
 
                 case RequestImportTwoFas:
@@ -681,30 +676,6 @@ namespace AuthenticatorPro.Droid.Activity
 
             _preventBackupReminder = false;
             TriggerAutoBackupWorker();
-        }
-
-        private void ShowDatabaseErrorDialog(Exception exception)
-        {
-            var builder = new MaterialAlertDialogBuilder(this);
-            builder.SetMessage(Resource.String.databaseError);
-            builder.SetTitle(Resource.String.error);
-            builder.SetIcon(Resource.Drawable.baseline_warning_24);
-
-            builder.SetNeutralButton(Resource.String.viewErrorLog, delegate
-            {
-                var intent = new Intent(this, typeof(ErrorActivity));
-                intent.PutExtra("exception", exception.ToString());
-                StartActivity(intent);
-            });
-
-            builder.SetPositiveButton(Resource.String.retry, async delegate
-            {
-                await _database.CloseAsync(Database.Origin.Activity);
-                Recreate();
-            });
-
-            builder.SetCancelable(false);
-            builder.Create().Show();
         }
 
         #endregion
@@ -1121,7 +1092,7 @@ namespace AuthenticatorPro.Droid.Activity
 
             try
             {
-                result = await QrCodeReader.ScanImageFromFileAsync(this, uri);
+                result = await QrCodeImageReader.ScanImageFromFileAsync(this, uri);
             }
             catch (IOException e)
             {
@@ -1154,6 +1125,17 @@ namespace AuthenticatorPro.Droid.Activity
             else if (uri.StartsWith("otpauth") || uri.StartsWith("motp"))
             {
                 await OnUriScan(uri);
+            }
+            else if (uri.StartsWith("phonefactor"))
+            {
+                new MaterialAlertDialogBuilder(this)
+                    .SetTitle(Resource.String.warning)
+                    .SetMessage(Resource.String.qrCodePhoneFactorError)
+                    .SetIcon(Resource.Drawable.baseline_warning_24)
+                    .SetPositiveButton(Resource.String.ok, delegate { })
+                    .Show();
+                
+                return;
             }
             else
             {
@@ -1292,6 +1274,8 @@ namespace AuthenticatorPro.Droid.Activity
             fragment.AegisClicked += delegate { StartFilePickActivity("*/*", RequestImportAegis); };
 
             fragment.BitwardenClicked += delegate { StartFilePickActivity("*/*", RequestImportBitwarden); };
+            
+            fragment.EnteAuthClicked += delegate { StartFilePickActivity("*/*", RequestImportEnteAuth); };
 
             fragment.WinAuthClicked += delegate { StartFilePickActivity("*/*", RequestImportWinAuth); };
 
@@ -1327,6 +1311,8 @@ namespace AuthenticatorPro.Droid.Activity
 
         private async Task<RestoreResult> DecryptAndRestore(byte[] data, string password)
         {
+            Exception exception = null;
+            
             foreach (var encryption in _backupEncryptions.Where(e => e.CanBeDecrypted(data)))
             {
                 Backup backup;
@@ -1338,13 +1324,14 @@ namespace AuthenticatorPro.Droid.Activity
                 catch (Exception e)
                 {
                     _log.Warning(e, "Unable to decrypt with {Encryption}", encryption);
+                    exception = e;
                     continue;
                 }
 
                 return await _restoreService.RestoreAndUpdateAsync(backup);
             }
 
-            throw new ArgumentException("Decryption failed");
+            throw exception;
         }
 
         private void PromptForRestorePassword(byte[] data)
@@ -1356,7 +1343,7 @@ namespace AuthenticatorPro.Droid.Activity
             sheet.PasswordEntered += async (_, password) =>
             {
                 sheet.SetLoading(true);
-
+                
                 try
                 {
                     var result = await DecryptAndRestore(data, password);
@@ -1364,8 +1351,9 @@ namespace AuthenticatorPro.Droid.Activity
                 }
                 catch (Exception e)
                 {
+                    sheet.Error = GetString(e is BackupPasswordException
+                        ? Resource.String.passwordIncorrect: Resource.String.restoreFormatError);
                     _log.Error(e, "Error decrypting file");
-                    sheet.Error = GetString(Resource.String.restoreError);
                     sheet.SetLoading(false);
                     return;
                 }
@@ -1384,7 +1372,7 @@ namespace AuthenticatorPro.Droid.Activity
 
             try
             {
-                data = await FileUtil.ReadFile(this, uri);
+                data = await FileUtil.ReadFileAsync(this, uri);
 
                 if (data.Length == 0)
                 {
@@ -1465,7 +1453,8 @@ namespace AuthenticatorPro.Droid.Activity
                     catch (Exception e)
                     {
                         _log.Error(e, "Error converting backup for restore");
-                        sheet.Error = GetString(Resource.String.restoreError);
+                        sheet.Error = GetString(e is BackupPasswordException
+                            ? Resource.String.passwordIncorrect : Resource.String.importError);
                         sheet.SetLoading(false);
                     }
                 };
@@ -1517,7 +1506,7 @@ namespace AuthenticatorPro.Droid.Activity
 
             try
             {
-                data = await FileUtil.ReadFile(this, uri);
+                data = await FileUtil.ReadFileAsync(this, uri);
             }
             catch (Exception e)
             {
@@ -1592,7 +1581,7 @@ namespace AuthenticatorPro.Droid.Activity
                 try
                 {
                     var data = await encryption.EncryptAsync(backup, password);
-                    await FileUtil.WriteFile(this, destination, data);
+                    await FileUtil.WriteFileAsync(this, destination, data);
                 }
                 catch (Exception e)
                 {
@@ -1637,7 +1626,7 @@ namespace AuthenticatorPro.Droid.Activity
             try
             {
                 var backup = await _backupService.CreateHtmlBackupAsync();
-                await FileUtil.WriteFile(this, destination, backup.ToString());
+                await FileUtil.WriteFileAsync(this, destination, backup.ToString());
             }
             catch (Exception e)
             {
@@ -1654,7 +1643,7 @@ namespace AuthenticatorPro.Droid.Activity
             try
             {
                 var backup = await _backupService.CreateUriListBackupAsync();
-                await FileUtil.WriteFile(this, destination, backup.ToString());
+                await FileUtil.WriteFileAsync(this, destination, backup.ToString());
             }
             catch (Exception e)
             {
@@ -1956,7 +1945,7 @@ namespace AuthenticatorPro.Droid.Activity
 
             try
             {
-                var data = await FileUtil.ReadFile(this, source);
+                var data = await FileUtil.ReadFileAsync(this, source);
                 var icon = await _customIconDecoder.DecodeAsync(data, true);
                 await SetCustomIcon(auth, icon);
             }
