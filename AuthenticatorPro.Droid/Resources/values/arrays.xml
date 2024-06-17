@@ -37,57 +37,13 @@
 
     <string-array name="languageNames">
         <item>@string/systemDefault</item>
-        <item>@string/danish</item>
-        <item>@string/german</item>
         <item>@string/english</item>
-        <item>@string/spanish</item>
-        <item>@string/esperanto</item>
-        <item>@string/french</item>
-        <item>@string/italian</item>
-        <item>@string/dutch</item>
-        <item>@string/polish</item>
-        <item>@string/portuguese</item>
-        <item>@string/brazilianPortuguese</item>
-        <item>@string/russian</item>
-        <item>@string/slovak</item>
-        <item>@string/finnish</item>
-        <item>@string/swedish</item>
-        <item>@string/vietnamese</item>
-        <item>@string/turkish</item>
-        <item>@string/ukrainian</item>
-        <item>@string/arabic</item>
-        <item>@string/kannada</item>
-        <item>@string/thai</item>
-        <item>@string/japanese</item>
         <item>@string/chineseSimplified</item>
-        <item>@string/korean</item>
     </string-array>
     <string-array name="languageValues">
         <item>system</item>
-        <item>da</item>
-        <item>de</item>
         <item>en</item>
-        <item>es</item>
-        <item>eo</item>
-        <item>fr</item>
-        <item>it</item>
-        <item>nl</item>
-        <item>pl</item>
-        <item>pt</item>
-        <item>pt-BR</item>
-        <item>ru</item>
-        <item>sk</item>
-        <item>fi</item>
-        <item>sv</item>
-        <item>vi</item>
-        <item>tr</item>
-        <item>uk</item>
-        <item>ar</item>
-        <item>kn-IN</item>
-        <item>th</item>
-        <item>ja</item>
         <item>zh-CN</item>
-        <item>ko</item>
     </string-array>
 
     <string-array name="timeoutNames">
