@@ -27,7 +27,6 @@ jobs:
 
       - name: Publish Android
         run: |
-          REF=$(echo $GITHUB_SHA | cut -c -7)
           sed -i "s|<string name=\"displayName\" translatable=\"false\">认证器</string>|<string name=\"displayName\" translatable=\"false\">认证器</string>|g" AuthenticatorPro.Droid/Resources/values/strings.xml
 
           dotnet publish -f:$FRAMEWORK -c:$CONFIGURATION --no-restore AuthenticatorPro.Droid/AuthenticatorPro.Droid.csproj
@@ -36,7 +35,6 @@ jobs:
 
       - name: Publish Wear OS
         run: |
-          REF=$(echo $GITHUB_SHA | cut -c -7)
           sed -i "s|<string name=\"displayName\" translatable=\"false\">认证器</string>|<string name=\"displayName\" translatable=\"false\">认证器</string>|g" AuthenticatorPro.WearOS/Resources/values/strings.xml
 
           dotnet publish -f:$FRAMEWORK -c:$CONFIGURATION --no-restore AuthenticatorPro.WearOS/AuthenticatorPro.WearOS.csproj
