@@ -34,9 +34,18 @@ jobs:
           APK=$(find AuthenticatorPro.Droid/bin/$CONFIGURATION/$FRAMEWORK/publish -name '*-Signed.apk')
           mv $APK "me.jmh.authenticatorpro.apk"
 
+      - name: Publish Wear OS
+        run: |
+          REF=$(echo $GITHUB_SHA | cut -c -7)
+          sed -i "s|<string name=\"displayName\" translatable=\"false\">认证器</string>|<string name=\"displayName\" translatable=\"false\">认证器</string>|g" AuthenticatorPro.WearOS/Resources/values/strings.xml
+
+          dotnet publish -f:$FRAMEWORK -c:$CONFIGURATION --no-restore AuthenticatorPro.WearOS/AuthenticatorPro.WearOS.csproj
+          APK=$(find AuthenticatorPro.WearOS/bin/$CONFIGURATION/$FRAMEWORK/publish -name '*-Signed.apk')
+          mv $APK "me.jmh.authenticatorpro.wearos.apk"
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: AuthenticatorPro
           path: |
-            me.jmh.authenticatorpro.apk
+            me.jmh.authenticatorpro*.apk
