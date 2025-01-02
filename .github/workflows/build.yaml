@@ -21,19 +21,15 @@ jobs:
       - name: Install Android platform tools
         run: $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install platform-tools
 
-      - name: Prepare keystore
-        run: |
-          echo "${{ secrets.KEYSTORE }}" | base64 -d > "$GITHUB_WORKSPACE/keystore.jks"
-
       - name: Build Android APK
         run: |
           sed -i "s|<string name=\"displayName\" translatable=\"false\">认证器</string>|<string name=\"displayName\" translatable=\"false\">认证器</string>|g" AuthenticatorPro.Droid/Resources/values/strings.xml
-          python extra/build.py android apk --branch "${{ github.ref_name }}" --keystore "$GITHUB_WORKSPACE/keystore.jks" --keystore-pass "${{ secrets.KEYSTORE_PASS }}" --keystore-alias "${{ secrets.KEYSTORE_ALIAS }}" --keystore-key-pass "${{ secrets.KEYSTORE_KEY_PASS }}"
+          python extra/build.py android apk --branch "${{ github.ref_name }}" --keystore "$GITHUB_WORKSPACE/game.keystore" --keystore-pass "${{ secrets.KEYSTORE_PASS }}" --keystore-alias "${{ secrets.KEYSTORE_ALIAS }}" --keystore-key-pass "${{ secrets.KEYSTORE_KEY_PASS }}"
 
       - name: Build Wear OS APK
         run: |
           sed -i "s|<string name=\"displayName\" translatable=\"false\">认证器</string>|<string name=\"displayName\" translatable=\"false\">认证器</string>|g" AuthenticatorPro.Droid/Resources/values/strings.xml
-          python extra/build.py wearos apk --branch "${{ github.ref_name }}" --keystore "$GITHUB_WORKSPACE/keystore.jks" --keystore-pass "${{ secrets.KEYSTORE_PASS }}" --keystore-alias "${{ secrets.KEYSTORE_ALIAS }}" --keystore-key-pass "${{ secrets.KEYSTORE_KEY_PASS }}"
+          python extra/build.py wearos apk --branch "${{ github.ref_name }}" --keystore "$GITHUB_WORKSPACE/game.keystore" --keystore-pass "${{ secrets.KEYSTORE_PASS }}" --keystore-alias "${{ secrets.KEYSTORE_ALIAS }}" --keystore-key-pass "${{ secrets.KEYSTORE_KEY_PASS }}"
 
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
