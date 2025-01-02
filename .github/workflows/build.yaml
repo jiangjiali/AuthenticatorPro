@@ -15,9 +15,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Android workload
-        run: dotnet workload install maui
-
       - name: Install Android platform tools
         run: $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install platform-tools
 
