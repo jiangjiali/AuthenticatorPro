@@ -17,15 +17,18 @@ jobs:
 
       - name: Install Android platform tools
         run: $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install platform-tools
+        
+      - name: Install Android workload
+        run: dotnet workload install maui-android
 
       - name: Build Android APK
         run: |
-          sed -i "s|<string name=\"displayName\" translatable=\"false\">认证器</string>|<string name=\"displayName\" translatable=\"false\">认证器</string>|g" AuthenticatorPro.Droid/Resources/values/strings.xml
+          sed -i "s|<string name=\"displayName\" translatable=\"false\">认证器</string>|<string name=\"displayName\" translatable=\"false\">认证器</string>|g" Stratum.Droid/Resources/values/strings.xml
           python extra/build.py android apk --branch "${{ github.ref_name }}" --keystore "$GITHUB_WORKSPACE/.github/game.keystore" --keystore-pass "${{ secrets.KEYSTORE_PASS }}" --keystore-alias "${{ secrets.KEYSTORE_ALIAS }}" --keystore-key-pass "${{ secrets.KEYSTORE_KEY_PASS }}"
 
       - name: Build Wear OS APK
         run: |
-          sed -i "s|<string name=\"displayName\" translatable=\"false\">认证器</string>|<string name=\"displayName\" translatable=\"false\">认证器</string>|g" AuthenticatorPro.Droid/Resources/values/strings.xml
+          sed -i "s|<string name=\"displayName\" translatable=\"false\">认证器</string>|<string name=\"displayName\" translatable=\"false\">认证器</string>|g" Stratum.Droid/Resources/values/strings.xml
           python extra/build.py wearos apk --branch "${{ github.ref_name }}" --keystore "$GITHUB_WORKSPACE/.github/game.keystore" --keystore-pass "${{ secrets.KEYSTORE_PASS }}" --keystore-alias "${{ secrets.KEYSTORE_ALIAS }}" --keystore-key-pass "${{ secrets.KEYSTORE_KEY_PASS }}"
 
       - name: Upload APK as artifact
